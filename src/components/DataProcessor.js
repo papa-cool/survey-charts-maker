@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 const DataProcessor = ({ rawData, onProcessedData }) => {
   useEffect(() => {
@@ -17,19 +17,14 @@ const DataProcessor = ({ rawData, onProcessedData }) => {
             groups[group] = { question1: [0, 0, 0, 0], question2: [0, 0, 0, 0], totalResponses: 0 };
           }
 
-          if (q1 >= 1 && q1 <= 4) {
-            groups[group].question1[q1 - 1]++;
-            totalAnswers.question1[q1 - 1]++;
-            groups[group].totalResponses++;
-            totalResponses++;
-          }
+          groups[group].question1[q1 - 1]++;
+          totalAnswers.question1[q1 - 1]++;
 
-          if (q2 >= 1 && q2 <= 4) {
-            groups[group].question2[q2 - 1]++;
-            totalAnswers.question2[q2 - 1]++;
-            groups[group].totalResponses++;
-            totalResponses++;
-          }
+          groups[group].question2[q2 - 1]++;
+          totalAnswers.question2[q2 - 1]++;
+
+          groups[group].totalResponses++;
+          totalResponses++;
         });
 
         onProcessedData({ groups, totalAnswers, totalResponses });
