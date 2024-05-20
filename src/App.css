@@ -41,7 +41,9 @@
   width: 75%;
   min-width: 300px; /* Minimum width to ensure chart is readable */
   height: 400px; /* Fixed height */
-  margin: 20px auto; /* Center align the chart container and add spacing between charts */
+  margin: 40px auto; /* Center align the chart container and add more spacing between charts */
+  padding-top: 20px; /* Add padding to the top for the title */
 }
+
 
 
