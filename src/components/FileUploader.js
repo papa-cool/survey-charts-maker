@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
 const FileUploader = ({ onFilesParsed }) => {
+  const [fileData, setFileData] = useState(null);
+  const [headers, setHeaders] = useState([]);
+  const [firstTwoRows, setFirstTwoRows] = useState([]);
+
   const handleFileUpload = (event, surveyType) => {
     const file = event.target.files[0];
     if (file) {
@@ -13,7 +17,10 @@ const FileUploader = ({ onFilesParsed }) => {
           Papa.parse(data, {
             header: true,
             complete: (result) => {
-              onFilesParsed({ data: result.data, surveyType });
+              const rows = result.data;
+              setHeaders(Object.keys(rows[0]));
+              setFirstTwoRows(rows.slice(0, 2));
+              onFilesParsed({ data: rows, surveyType });
             },
             error: (error) => {
               console.error("Error parsing CSV file:", error);
@@ -32,6 +39,8 @@ const FileUploader = ({ onFilesParsed }) => {
             });
             return obj;
           });
+          setHeaders(headers);
+          setFirstTwoRows(rows.slice(0, 2));
           onFilesParsed({ data: rows, surveyType });
         }
       };
@@ -59,6 +68,37 @@ const FileUploader = ({ onFilesParsed }) => {
         accept=".csv,.xls,.xlsx"
         onChange={(e) => handleFileUpload(e, 'previous2')}
       />
+      <h3>Upload S -3 Survey</h3>
+      <input
+        type="file"
+        accept=".csv,.xls,.xlsx"
+        onChange={(e) => handleFileUpload(e, 'previous3')}
+      />
+      {fileData && (
+        <div>
+          <h4>File Preview</h4>
+          <div style={{ overflowX: 'auto' }}>
+            <table>
+              <thead>
+                <tr>
+                  {headers.map((header, index) => (
+                    <th key={index}>{header}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {firstTwoRows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {headers.map((header, colIndex) => (
+                      <td key={colIndex}>{row[header]}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

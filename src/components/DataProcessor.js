@@ -1,45 +1,54 @@
 import React, { useEffect } from 'react';
 
-const DataProcessor = ({ rawData, onProcessedData }) => {
+const DataProcessor = ({ rawData, selectedGroups, onProcessedData }) => {
   useEffect(() => {
-    if (rawData.current && rawData.previous1 && rawData.previous2) {
-      const processSurveyData = (surveyData) => {
+    if (rawData.current) {
+      const processSurveyData = (surveyData, selectedGroups) => {
         const survey = {
           groups: {},
-          totalAnswers: { question1: [0, 0, 0, 0], question2: [0, 0, 0, 0] },
+          totalAnswers: {},
           totalResponses: 0
         };
 
         surveyData.forEach(row => {
-          const group = row['Group'];
-          const q1 = parseInt(row['Question 1'], 10);
-          const q2 = parseInt(row['Question 2'], 10);
-
-          if (!survey.groups[group]) {
-            survey.groups[group] = { question1: [0, 0, 0, 0], question2: [0, 0, 0, 0], totalResponses: 0 };
+          const groupKey = selectedGroups.map(group => row[group]).join('_');
+          if (!survey.groups[groupKey]) {
+            survey.groups[groupKey] = { totalResponses: 0 };
+            Object.keys(row).forEach(question => {
+              if (!selectedGroups.includes(question)) {
+                survey.groups[groupKey][question] = [0, 0, 0, 0];
+                survey.totalAnswers[question] = survey.totalAnswers[question] || [0, 0, 0, 0];
+              }
+            });
           }
 
-          survey.groups[group].question1[q1 - 1]++;
-          survey.totalAnswers.question1[q1 - 1]++;
-          survey.groups[group].question2[q2 - 1]++;
-          survey.totalAnswers.question2[q2 - 1]++;
-          survey.groups[group].totalResponses++;
-          survey.totalResponses++;
+          Object.keys(row).forEach(question => {
+            if (!selectedGroups.includes(question)) {
+              const answer = parseInt(row[question], 10);
+              if (answer >= 1 && answer <= 4) {
+                survey.groups[groupKey][question][answer - 1]++;
+                survey.totalAnswers[question][answer - 1]++;
+                survey.groups[groupKey].totalResponses++;
+                survey.totalResponses++;
+              }
+            }
+          });
         });
 
         return survey;
       };
 
-      const currentSurvey = processSurveyData(rawData.current);
-      const previous1Survey = processSurveyData(rawData.previous1);
-      const previous2Survey = processSurveyData(rawData.previous2);
+      const currentSurvey = processSurveyData(rawData.current, selectedGroups);
+      const previousSurveys = ['previous1', 'previous2', 'previous3']
+        .filter(key => rawData[key])
+        .map(key => processSurveyData(rawData[key], selectedGroups));
 
       onProcessedData({
         current: currentSurvey,
-        previous: [previous1Survey, previous2Survey]
+        previous: previousSurveys
       });
     }
-  }, [rawData, onProcessedData]);
+  }, [rawData, selectedGroups, onProcessedData]);
 
   return null;
 };
