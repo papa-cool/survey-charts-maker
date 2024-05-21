@@ -5,25 +5,41 @@ import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
 const ChartRenderer = ({ groupedData }) => {
-  const generateChartData = (data, questionKey) => {
-    const labels = Object.keys(data.groups);
-    const groupedQuestionData = labels.map(label => data.groups[label][questionKey]);
-    const totalQuestionData = data.totalAnswers[questionKey];
+  const generateChartData = (data, questionKey, groupName = null) => {
+    let labels, allProportions;
 
-    const proportions = groupedQuestionData.map((group, index) => {
-      const total = data.groups[labels[index]].totalResponses;
-      return group.map((count) => total > 0 ? count / total : 0);
-    });
+    if (groupName) {
+      // Generate data for group charts
+      labels = ['Overall', 'Current', ...data.previous.map((_, index) => `S -${index + 1}`)];
+      const currentGroup = data.current.groups[groupName] || { question1: [0, 0, 0, 0], question2: [0, 0, 0, 0], totalResponses: 0 };
+      const previousGroups = data.previous.map(survey => survey.groups[groupName] || { question1: [0, 0, 0, 0], question2: [0, 0, 0, 0], totalResponses: 0 });
 
-    const totalProportions = totalQuestionData.map(count => data.totalResponses > 0 ? count / data.totalResponses : 0);
+      const overallProportions = data.current.totalAnswers[questionKey].map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0);
+      const currentProportions = currentGroup[questionKey].map(count => currentGroup.totalResponses > 0 ? count / currentGroup.totalResponses : 0);
+      const previousProportions = previousGroups.map(group => group[questionKey].map(count => group.totalResponses > 0 ? count / group.totalResponses : 0));
+
+      allProportions = [overallProportions, currentProportions, ...previousProportions];
+    } else {
+      // Generate data for overall charts
+      labels = ['Current', ...data.previous.map((_, index) => `S -${index + 1}`), ...Object.keys(data.current.groups)];
+
+      const currentProportions = data.current.totalAnswers[questionKey].map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0);
+      const previousProportions = data.previous.map(survey => survey.totalAnswers[questionKey].map(count => survey.totalResponses > 0 ? count / survey.totalResponses : 0));
+      const groupProportions = Object.keys(data.current.groups).map(group => {
+        const groupData = data.current.groups[group];
+        return groupData[questionKey].map(count => groupData.totalResponses > 0 ? count / groupData.totalResponses : 0);
+      });
+
+      allProportions = [currentProportions, ...previousProportions, ...groupProportions];
+    }
 
     return {
-      labels: [...labels, 'Total'],
+      labels: labels,
       datasets: [
-        { label: 'Answer 1', data: [...proportions.map(p => p[0]), totalProportions[0]], count: [...groupedQuestionData.map(g => g[0]), totalQuestionData[0]], backgroundColor: 'rgba(255, 99, 132, 0.5)' },
-        { label: 'Answer 2', data: [...proportions.map(p => p[1]), totalProportions[1]], count: [...groupedQuestionData.map(g => g[1]), totalQuestionData[1]], backgroundColor: 'rgba(54, 162, 235, 0.5)' },
-        { label: 'Answer 3', data: [...proportions.map(p => p[2]), totalProportions[2]], count: [...groupedQuestionData.map(g => g[2]), totalQuestionData[2]], backgroundColor: 'rgba(255, 206, 86, 0.5)' },
-        { label: 'Answer 4', data: [...proportions.map(p => p[3]), totalProportions[3]], count: [...groupedQuestionData.map(g => g[3]), totalQuestionData[3]], backgroundColor: 'rgba(75, 192, 192, 0.5)' },
+        { label: 'Answer 1', data: allProportions.map(p => p[0]), backgroundColor: 'rgba(255, 99, 132, 0.5)' },
+        { label: 'Answer 2', data: allProportions.map(p => p[1]), backgroundColor: 'rgba(54, 162, 235, 0.5)' },
+        { label: 'Answer 3', data: allProportions.map(p => p[2]), backgroundColor: 'rgba(255, 206, 86, 0.5)' },
+        { label: 'Answer 4', data: allProportions.map(p => p[3]), backgroundColor: 'rgba(75, 192, 192, 0.5)' },
       ]
     };
   };
@@ -34,15 +50,15 @@ const ChartRenderer = ({ groupedData }) => {
         callbacks: {
           label: function(context) {
             const dataset = context.dataset;
-            const value = dataset.count[context.dataIndex];
-            return `${dataset.label}: ${value}`;
+            const value = dataset.data[context.dataIndex];
+            return `${dataset.label}: ${(value * 100).toFixed(2)}%`;
           }
         }
       },
       datalabels: {
         display: true,
         color: 'black',
-        formatter: (value, context) => context.dataset.count[context.dataIndex],
+        formatter: (value) => `${(value * 100).toFixed(2)}%`,
       }
     },
     scales: {
@@ -66,23 +82,26 @@ const ChartRenderer = ({ groupedData }) => {
     indexAxis: 'y',
   };
 
-  const question1ChartData = groupedData ? generateChartData(groupedData, 'question1') : null;
-  const question2ChartData = groupedData ? generateChartData(groupedData, 'question2') : null;
+  const allGroups = Object.keys(groupedData.current.groups);
+  const questionKeys = ['question1', 'question2'];
 
   return (
     <div>
-      {question1ChartData && (
-        <div className="chart-container">
-          <h3>Question 1</h3>
-          <Bar data={question1ChartData} options={chartOptions} />
+      {questionKeys.map(questionKey => (
+        <div key={questionKey}>
+          <h3>{questionKey === 'question1' ? 'Question 1' : 'Question 2'}</h3>
+          <div className="chart-container">
+            <h4>Overall</h4>
+            <Bar data={generateChartData(groupedData, questionKey)} options={chartOptions} />
+          </div>
+          {allGroups.map(group => (
+            <div className="chart-container" key={group}>
+              <h4>Group: {group}</h4>
+              <Bar data={generateChartData(groupedData, questionKey, group)} options={chartOptions} />
+            </div>
+          ))}
         </div>
-      )}
-      {question2ChartData && (
-        <div className="chart-container">
-          <h3>Question 2</h3>
-          <Bar data={question2ChartData} options={chartOptions} />
-        </div>
-      )}
+      ))}
     </div>
   );
 };

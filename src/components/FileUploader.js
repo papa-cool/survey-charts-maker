@@ -2,8 +2,8 @@ import React from 'react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
-const FileUploader = ({ onFileParsed }) => {
-  const handleFileUpload = (event) => {
+const FileUploader = ({ onFilesParsed }) => {
+  const handleFileUpload = (event, surveyType) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -12,8 +12,8 @@ const FileUploader = ({ onFileParsed }) => {
         if (file.type === 'text/csv') {
           Papa.parse(data, {
             header: true,
-            complete: (results) => {
-              onFileParsed(results.data);
+            complete: (result) => {
+              onFilesParsed({ data: result.data, surveyType });
             },
             error: (error) => {
               console.error("Error parsing CSV file:", error);
@@ -32,7 +32,7 @@ const FileUploader = ({ onFileParsed }) => {
             });
             return obj;
           });
-          onFileParsed(rows);
+          onFilesParsed({ data: rows, surveyType });
         }
       };
       reader.readAsBinaryString(file);
@@ -40,11 +40,26 @@ const FileUploader = ({ onFileParsed }) => {
   };
 
   return (
-    <input
-      type="file"
-      accept=".csv,.xls,.xlsx"
-      onChange={handleFileUpload}
-    />
+    <div>
+      <h3>Upload Current Survey</h3>
+      <input
+        type="file"
+        accept=".csv,.xls,.xlsx"
+        onChange={(e) => handleFileUpload(e, 'current')}
+      />
+      <h3>Upload S -1 Survey</h3>
+      <input
+        type="file"
+        accept=".csv,.xls,.xlsx"
+        onChange={(e) => handleFileUpload(e, 'previous1')}
+      />
+      <h3>Upload S -2 Survey</h3>
+      <input
+        type="file"
+        accept=".csv,.xls,.xlsx"
+        onChange={(e) => handleFileUpload(e, 'previous2')}
+      />
+    </div>
   );
 };
 

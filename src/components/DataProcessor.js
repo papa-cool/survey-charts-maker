@@ -2,35 +2,42 @@ import React, { useEffect } from 'react';
 
 const DataProcessor = ({ rawData, onProcessedData }) => {
   useEffect(() => {
-    if (rawData.length > 0) {
-      const processCSVData = (data) => {
-        const groups = {};
-        const totalAnswers = { question1: [0, 0, 0, 0], question2: [0, 0, 0, 0] };
-        let totalResponses = 0;
+    if (rawData.current && rawData.previous1 && rawData.previous2) {
+      const processSurveyData = (surveyData) => {
+        const survey = {
+          groups: {},
+          totalAnswers: { question1: [0, 0, 0, 0], question2: [0, 0, 0, 0] },
+          totalResponses: 0
+        };
 
-        data.forEach(row => {
+        surveyData.forEach(row => {
           const group = row['Group'];
           const q1 = parseInt(row['Question 1'], 10);
           const q2 = parseInt(row['Question 2'], 10);
 
-          if (!groups[group]) {
-            groups[group] = { question1: [0, 0, 0, 0], question2: [0, 0, 0, 0], totalResponses: 0 };
+          if (!survey.groups[group]) {
+            survey.groups[group] = { question1: [0, 0, 0, 0], question2: [0, 0, 0, 0], totalResponses: 0 };
           }
 
-          groups[group].question1[q1 - 1]++;
-          totalAnswers.question1[q1 - 1]++;
-
-          groups[group].question2[q2 - 1]++;
-          totalAnswers.question2[q2 - 1]++;
-
-          groups[group].totalResponses++;
-          totalResponses++;
+          survey.groups[group].question1[q1 - 1]++;
+          survey.totalAnswers.question1[q1 - 1]++;
+          survey.groups[group].question2[q2 - 1]++;
+          survey.totalAnswers.question2[q2 - 1]++;
+          survey.groups[group].totalResponses++;
+          survey.totalResponses++;
         });
 
-        onProcessedData({ groups, totalAnswers, totalResponses });
+        return survey;
       };
 
-      processCSVData(rawData);
+      const currentSurvey = processSurveyData(rawData.current);
+      const previous1Survey = processSurveyData(rawData.previous1);
+      const previous2Survey = processSurveyData(rawData.previous2);
+
+      onProcessedData({
+        current: currentSurvey,
+        previous: [previous1Survey, previous2Survey]
+      });
     }
   }, [rawData, onProcessedData]);
 

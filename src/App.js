@@ -5,13 +5,20 @@ import ChartRenderer from './components/ChartRenderer';
 import './App.css';
 
 function App() {
-  const [rawData, setRawData] = useState([]);
+  const [rawData, setRawData] = useState({});
   const [processedData, setProcessedData] = useState(null);
+
+  const handleFilesParsed = (parsedFile) => {
+    setRawData(prevState => ({
+      ...prevState,
+      [parsedFile.surveyType]: parsedFile.data
+    }));
+  };
 
   return (
     <div className="App">
       <h1>Data Visualization App</h1>
-      <FileUploader onFileParsed={setRawData} />
+      <FileUploader onFilesParsed={handleFilesParsed} />
       <DataProcessor rawData={rawData} onProcessedData={setProcessedData} />
       {processedData && <ChartRenderer groupedData={processedData} />}
     </div>
