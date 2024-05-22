@@ -10,19 +10,16 @@ const GroupSelector = ({ headers, selectedGroups, onSelectGroup }) => {
   };
 
   return (
-    <div>
-      <h3>Select Grouping Columns</h3>
-      <div>
-        {headers.map((header, index) => (
-          <button
-            key={index}
-            style={{ backgroundColor: selectedGroups.includes(header) ? 'lightblue' : 'white' }}
-            onClick={() => handleGroupSelection(header)}
-          >
-            {header}
-          </button>
-        ))}
-      </div>
+    <div className="group-selector">
+      {headers.map((header, index) => (
+        <button
+          key={index}
+          className={`group-selector-button ${selectedGroups.includes(header) ? 'selected' : ''}`}
+          onClick={() => handleGroupSelection(header)}
+        >
+          {header}
+        </button>
+      ))}
     </div>
   );
 };

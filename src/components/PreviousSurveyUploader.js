@@ -2,7 +2,7 @@ import React from 'react';
 import Dropzone from 'react-dropzone';
 import * as XLSX from 'xlsx';
 
-const FileUploader = ({ onFilesParsed }) => {
+const PreviousSurveyUploader = ({ onFilesParsed }) => {
   const handleDrop = (acceptedFiles) => {
     acceptedFiles.forEach(file => {
       const reader = new FileReader();
@@ -11,7 +11,7 @@ const FileUploader = ({ onFilesParsed }) => {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-        onFilesParsed({ surveyType: 'current', data: worksheet });
+        onFilesParsed({ surveyType: `previous${Object.keys(worksheet).length}`, data: worksheet });
       };
       reader.readAsArrayBuffer(file);
     });
@@ -22,11 +22,11 @@ const FileUploader = ({ onFilesParsed }) => {
       {({ getRootProps, getInputProps }) => (
         <div {...getRootProps({ className: 'dropzone' })}>
           <input {...getInputProps()} />
-          <p>Drop your current survey file here, or click to select file.</p>
+          <p>Drop your previous survey files here, or click to select files.</p>
         </div>
       )}
     </Dropzone>
   );
 };
 
-export default FileUploader;
+export default PreviousSurveyUploader;
