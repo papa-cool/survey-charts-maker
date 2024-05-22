@@ -18,7 +18,7 @@ const DataProcessor = ({ rawData, selectedGroups, onProcessedData }) => {
         if (!survey.groups[groupKey]) {
           survey.groups[groupKey] = { totalResponses: 0 };
           Object.keys(row).forEach(question => {
-            if (question !== groupByColumn) {
+            if (!selectedGroups.includes(question)) { // Exclude grouping columns from questions
               survey.groups[groupKey][question] = [0, 0, 0, 0];
               survey.totalAnswers[question] = survey.totalAnswers[question] || [0, 0, 0, 0];
             }
@@ -28,7 +28,7 @@ const DataProcessor = ({ rawData, selectedGroups, onProcessedData }) => {
         let rowAnswered = false;
 
         Object.keys(row).forEach(question => {
-          if (question !== groupByColumn) {
+          if (!selectedGroups.includes(question)) { // Exclude grouping columns from questions
             const answer = parseInt(row[question], 10);
             if (answer >= 1 && answer <= 4) {
               survey.groups[groupKey][question][answer - 1]++;

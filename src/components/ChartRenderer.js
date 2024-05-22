@@ -86,7 +86,7 @@ const ChartRenderer = ({ groupedData, selectedGroups }) => {
     return null; // Handle case where data is not yet loaded or properly initialized
   }
 
-  const allQuestions = Object.keys(groupedData[selectedGroups[0]].current.totalAnswers || {});
+  const allQuestions = Object.keys(groupedData[selectedGroups[0]].current.totalAnswers || {}).filter(key => !selectedGroups.includes(key));
 
   return (
     <div>
