@@ -11,6 +11,7 @@ function App() {
   const [processedData, setProcessedData] = useState(null);
   const [selectedGroups, setSelectedGroups] = useState([]);
   const [headers, setHeaders] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFilesParsed = (parsedFile) => {
     setRawData(prevState => ({
@@ -22,57 +23,18 @@ function App() {
     }
   };
 
-  const processSurveyData = (surveyData, selectedGroups) => {
-    const survey = {
-      groups: {},
-      totalAnswers: {},
-      totalResponses: 0
-    };
-
-    surveyData.forEach(row => {
-      const groupKey = selectedGroups.map(group => row[group]).join('_');
-      if (!survey.groups[groupKey]) {
-        survey.groups[groupKey] = { totalResponses: 0 };
-        Object.keys(row).forEach(question => {
-          if (!selectedGroups.includes(question)) {
-            survey.groups[groupKey][question] = [0, 0, 0, 0];
-            survey.totalAnswers[question] = survey.totalAnswers[question] || [0, 0, 0, 0];
-          }
-        });
-      }
-
-      Object.keys(row).forEach(question => {
-        if (!selectedGroups.includes(question)) {
-          const answer = parseInt(row[question], 10);
-          if (answer >= 1 && answer <= 4) {
-            survey.groups[groupKey][question][answer - 1]++;
-            survey.totalAnswers[question][answer - 1]++;
-            survey.groups[groupKey].totalResponses++;
-            survey.totalResponses++;
-          }
-        }
-      });
-    });
-
-    return survey;
-  };
-
   const handleGroupSelection = (groups) => {
     setSelectedGroups(groups);
   };
 
-  const generateCharts = () => {
-    if (rawData.current) {
-      const currentSurvey = processSurveyData(rawData.current, selectedGroups);
-      const previousSurveys = ['previous1', 'previous2', 'previous3']
-        .filter(key => rawData[key])
-        .map(key => processSurveyData(rawData[key], selectedGroups));
+  const handleProcessedData = (data) => {
+    setProcessedData(data);
+    setIsProcessing(false);
+  };
 
-      setProcessedData({
-        current: currentSurvey,
-        previous: previousSurveys
-      });
-    }
+  const generateCharts = () => {
+    setIsProcessing(true);
+    setProcessedData(null); // Clear previous processed data
   };
 
   return (
@@ -85,6 +47,9 @@ function App() {
         onSelectGroup={handleGroupSelection}
       />
       <button onClick={generateCharts}>Generate Charts</button>
+      {isProcessing && (
+        <DataProcessor rawData={rawData} selectedGroups={selectedGroups} onProcessedData={handleProcessedData} />
+      )}
       {processedData && (
         <>
           <ChartRenderer groupedData={processedData} selectedGroups={selectedGroups} />

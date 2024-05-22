@@ -6,29 +6,31 @@ Chart.register(...registerables);
 
 const ChartRenderer = ({ groupedData, selectedGroups }) => {
   const generateChartData = (data, questionKey, groupName = null) => {
+    if (!data || !data.current || !data.previous) {
+      return { labels: [], datasets: [] };
+    }
+
     let labels, allProportions;
 
     if (groupName) {
+      // Generate data for group charts
       labels = ['Overall', 'Current', ...data.previous.map((_, index) => `S -${index + 1}`)];
       const currentGroup = data.current.groups[groupName] || { [questionKey]: [0, 0, 0, 0], totalResponses: 0 };
       const previousGroups = data.previous.map(survey => survey.groups[groupName] || { [questionKey]: [0, 0, 0, 0], totalResponses: 0 });
 
-      const overallProportions = data.current.totalAnswers[questionKey].map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0);
-      const currentProportions = currentGroup[questionKey].map(count => currentGroup.totalResponses > 0 ? count / currentGroup.totalResponses : 0);
-      const previousProportions = previousGroups.map(group => group[questionKey].map(count => group.totalResponses > 0 ? count / group.totalResponses : 0));
+      const overallProportions = (data.current.totalAnswers[questionKey] || []).map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0);
+      const currentProportions = (currentGroup[questionKey] || []).map(count => currentGroup.totalResponses > 0 ? count / currentGroup.totalResponses : 0);
+      const previousProportions = previousGroups.map(group => (group[questionKey] || []).map(count => group.totalResponses > 0 ? count / group.totalResponses : 0));
 
       allProportions = [overallProportions, currentProportions, ...previousProportions];
     } else {
-      labels = ['Current', ...data.previous.map((_, index) => `S -${index + 1}`), ...Object.keys(data.current.groups)];
+      // Generate data for overall charts
+      labels = ['Current', ...data.previous.map((_, index) => `S -${index + 1}`)];
 
-      const currentProportions = data.current.totalAnswers[questionKey].map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0);
-      const previousProportions = data.previous.map(survey => survey.totalAnswers[questionKey].map(count => survey.totalResponses > 0 ? count / survey.totalResponses : 0));
-      const groupProportions = Object.keys(data.current.groups).map(group => {
-        const groupData = data.current.groups[group];
-        return groupData[questionKey].map(count => groupData.totalResponses > 0 ? count / groupData.totalResponses : 0);
-      });
+      const currentProportions = (data.current.totalAnswers[questionKey] || []).map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0);
+      const previousProportions = data.previous.map(survey => (survey.totalAnswers[questionKey] || []).map(count => survey.totalResponses > 0 ? count / survey.totalResponses : 0));
 
-      allProportions = [currentProportions, ...previousProportions, ...groupProportions];
+      allProportions = [currentProportions, ...previousProportions];
     }
 
     return {
@@ -80,34 +82,36 @@ const ChartRenderer = ({ groupedData, selectedGroups }) => {
     indexAxis: 'y',
   };
 
-  const allQuestions = Object.keys(groupedData.current.totalAnswers);
-  const allGroups = Object.keys(groupedData.current.groups);
+  if (!groupedData || !selectedGroups || !selectedGroups.length || !groupedData[selectedGroups[0]]) {
+    return null; // Handle case where data is not yet loaded or properly initialized
+  }
+
+  const allQuestions = Object.keys(groupedData[selectedGroups[0]].current.totalAnswers || {});
 
   return (
     <div>
-      {allQuestions.map(questionKey => (
-        <div key={questionKey}>
-          <h3>{questionKey}</h3>
-          <div className="chart-container">
-            <h4>Overall</h4>
-            <Bar data={generateChartData(groupedData, questionKey)} options={chartOptions} />
-          </div>
-        </div>
-      ))}
-      {selectedGroups.map((groupKey, groupIndex) => (
-        <div key={groupIndex}>
+      {selectedGroups.map(groupKey => (
+        <div key={groupKey}>
           <h3>Grouping: {groupKey}</h3>
-          {allGroups.map(group => (
-            <div key={group}>
-              <h4>Group: {group}</h4>
-              {allQuestions.map(questionKey => (
-                <div key={questionKey} className="chart-container">
-                  <h5>Question: {questionKey}</h5>
-                  <Bar data={generateChartData(groupedData, questionKey, group)} options={chartOptions} />
-                </div>
-              ))}
-            </div>
-          ))}
+          <div>
+            {allQuestions.map(questionKey => (
+              <div key={questionKey} className="chart-container">
+                <h4>{questionKey}</h4>
+                <Bar data={generateChartData(groupedData[groupKey], questionKey)} options={chartOptions} />
+              </div>
+            ))}
+            {Object.keys(groupedData[groupKey].current.groups || {}).map(group => (
+              <div key={group}>
+                <h4>Group: {group}</h4>
+                {allQuestions.map(questionKey => (
+                  <div key={questionKey} className="chart-container">
+                    <h5>Question: {questionKey}</h5>
+                    <Bar data={generateChartData(groupedData[groupKey], questionKey, group)} options={chartOptions} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       ))}
     </div>
