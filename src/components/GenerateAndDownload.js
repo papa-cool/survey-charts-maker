@@ -12,7 +12,7 @@ const GenerateAndDownload = ({ groupedData, selectedGroups }) => {
     yOffset += 10;
 
     for (const container of questionContainers) {
-      const questionTitle = container.querySelector('h4')?.textContent || '';
+      const questionTitle = container.querySelector('h4')?.textContent || container.querySelector('h5')?.textContent || '';
       if (questionTitle) {
         pdf.text(questionTitle, 10, yOffset);
         yOffset += 10;

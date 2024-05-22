@@ -5,32 +5,25 @@ import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
 const ChartRenderer = ({ groupedData, selectedGroups }) => {
-  const generateChartData = (data, questionKey, groupName = null) => {
+  const generateChartData = (data, questionKey, includeGroups = false) => {
     if (!data || !data.current || !data.previous) {
       return { labels: [], datasets: [] };
     }
 
-    let labels, allProportions;
+    let labels = ['Current', ...data.previous.map((_, index) => `S -${index + 1}`)];
+    let allProportions = [
+      (data.current.totalAnswers[questionKey] || []).map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0),
+      ...data.previous.map(survey => (survey.totalAnswers[questionKey] || []).map(count => survey.totalResponses > 0 ? count / survey.totalResponses : 0))
+    ];
 
-    if (groupName) {
-      // Generate data for group charts
-      labels = ['Overall', 'Current', ...data.previous.map((_, index) => `S -${index + 1}`)];
-      const currentGroup = data.current.groups[groupName] || { [questionKey]: [0, 0, 0, 0], totalResponses: 0 };
-      const previousGroups = data.previous.map(survey => survey.groups[groupName] || { [questionKey]: [0, 0, 0, 0], totalResponses: 0 });
-
-      const overallProportions = (data.current.totalAnswers[questionKey] || []).map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0);
-      const currentProportions = (currentGroup[questionKey] || []).map(count => currentGroup.totalResponses > 0 ? count / currentGroup.totalResponses : 0);
-      const previousProportions = previousGroups.map(group => (group[questionKey] || []).map(count => group.totalResponses > 0 ? count / group.totalResponses : 0));
-
-      allProportions = [overallProportions, currentProportions, ...previousProportions];
-    } else {
-      // Generate data for overall charts
-      labels = ['Current', ...data.previous.map((_, index) => `S -${index + 1}`)];
-
-      const currentProportions = (data.current.totalAnswers[questionKey] || []).map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0);
-      const previousProportions = data.previous.map(survey => (survey.totalAnswers[questionKey] || []).map(count => survey.totalResponses > 0 ? count / survey.totalResponses : 0));
-
-      allProportions = [currentProportions, ...previousProportions];
+    if (includeGroups) {
+      const groupLabels = Object.keys(data.current.groups || {});
+      labels = [...labels, ...groupLabels];
+      const groupProportions = groupLabels.map(groupName => {
+        const group = data.current.groups[groupName];
+        return (group[questionKey] || []).map(count => group.totalResponses > 0 ? count / group.totalResponses : 0);
+      });
+      allProportions = [...allProportions, ...groupProportions];
     }
 
     return {
@@ -97,7 +90,7 @@ const ChartRenderer = ({ groupedData, selectedGroups }) => {
             {allQuestions.map(questionKey => (
               <div key={questionKey} className="chart-container">
                 <h4>{questionKey}</h4>
-                <Bar data={generateChartData(groupedData[groupKey], questionKey)} options={chartOptions} />
+                <Bar data={generateChartData(groupedData[groupKey], questionKey, true)} options={chartOptions} />
               </div>
             ))}
           </div>
@@ -107,7 +100,7 @@ const ChartRenderer = ({ groupedData, selectedGroups }) => {
               {allQuestions.map(questionKey => (
                 <div key={questionKey} className="chart-container">
                   <h5>Question: {questionKey}</h5>
-                  <Bar data={generateChartData(groupedData[groupKey], questionKey, group)} options={chartOptions} />
+                  <Bar data={generateChartData(groupedData[groupKey], questionKey)} options={chartOptions} />
                 </div>
               ))}
             </div>
