@@ -11,7 +11,8 @@ const PreviousSurveyUploader = ({ onFilesParsed }) => {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-        onFilesParsed({ surveyType: `previous${Object.keys(worksheet).length}`, data: worksheet });
+        const surveyType = `previous${acceptedFiles.length}`;
+        onFilesParsed({ surveyType, data: worksheet }, file.path);
       };
       reader.readAsArrayBuffer(file);
     });

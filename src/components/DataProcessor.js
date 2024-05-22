@@ -50,8 +50,8 @@ const DataProcessor = ({ rawData, selectedGroups, onProcessedData }) => {
     selectedGroups.forEach(groupByColumn => {
       processedData[groupByColumn] = {
         current: processSurveyData(rawData.current, groupByColumn),
-        previous: ['previous1', 'previous2', 'previous3']
-          .filter(key => rawData[key])
+        previous: Object.keys(rawData)
+          .filter(key => key.startsWith('previous'))
           .map(key => processSurveyData(rawData[key], groupByColumn))
       };
     });

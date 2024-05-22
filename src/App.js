@@ -14,8 +14,9 @@ function App() {
   const [selectedGroups, setSelectedGroups] = useState([]);
   const [headers, setHeaders] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  const handleFilesParsed = (parsedFile) => {
+  const handleFilesParsed = (parsedFile, filePath) => {
     setRawData(prevState => ({
       ...prevState,
       [parsedFile.surveyType]: parsedFile.data
@@ -24,7 +25,8 @@ function App() {
       setHeaders(Object.keys(parsedFile.data[0]));
       setStep(2); // Move to step 2 after current survey is uploaded
     } else {
-      setStep(3); // Move to next file upload step after previous survey is uploaded
+      setUploadedFiles(prevState => [...prevState, filePath]);
+      setStep(3); // Stay in step 3 for next file upload
     }
   };
 
@@ -40,6 +42,11 @@ function App() {
   const generateCharts = () => {
     setIsProcessing(true);
     setProcessedData(null); // Clear previous processed data
+  };
+
+  const proceedToStep4 = () => {
+    setIsProcessing(true);
+    setStep(4);
   };
 
   return (
@@ -71,15 +78,16 @@ function App() {
       {step === 3 && (
         <div className="step3">
           <h2>Upload Previous Survey</h2>
+          {uploadedFiles.length > 0 && <p className="notification">Uploaded files: {uploadedFiles.join(', ')}</p>}
           <p>Upload the previous survey to analyze evolution.</p>
           <PreviousSurveyUploader onFilesParsed={handleFilesParsed} />
-          <button onClick={() => setStep(4)}>Skip</button>
+          <button onClick={proceedToStep4}>Skip</button>
         </div>
       )}
 
       {step === 4 && (
         <div className="step4">
-          <button onClick={generateCharts}>Download Charts</button>
+          <GenerateAndDownload groupedData={processedData} selectedGroups={selectedGroups} />
           {isProcessing && (
             <DataProcessor rawData={rawData} selectedGroups={selectedGroups} onProcessedData={handleProcessedData} />
           )}
