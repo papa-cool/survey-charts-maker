@@ -5,22 +5,34 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
 const GenerateAndDownload = ({ groupedData, selectedGroups }) => {
-  const generatePDF = async () => {
+  const generatePDF = async (title, questionContainers) => {
     const pdf = new jsPDF();
-    const charts = document.querySelectorAll('.chart-container canvas');
+    let yOffset = 10;
+    pdf.text(title, 10, yOffset);
+    yOffset += 10;
 
-    for (let i = 0; i < charts.length; i++) {
-      const canvas = charts[i];
-      const imgData = canvas.toDataURL('image/png');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth - 20;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      if (i > 0) {
-        pdf.addPage();
+    for (const container of questionContainers) {
+      const questionTitle = container.querySelector('h4')?.textContent || '';
+      if (questionTitle) {
+        pdf.text(questionTitle, 10, yOffset);
+        yOffset += 10;
       }
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+
+      const canvas = container.querySelector('canvas');
+      if (canvas) {
+        const imgData = canvas.toDataURL('image/png');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const imgWidth = pageWidth - 20;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        if (yOffset + imgHeight > pdf.internal.pageSize.getHeight()) {
+          pdf.addPage();
+          yOffset = 10;
+        }
+
+        pdf.addImage(imgData, 'PNG', 10, yOffset, imgWidth, imgHeight);
+        yOffset += imgHeight + 10;
+      }
     }
 
     return pdf;
@@ -29,17 +41,25 @@ const GenerateAndDownload = ({ groupedData, selectedGroups }) => {
   const downloadAllCharts = async () => {
     const zip = new JSZip();
 
-    // Generate overall.pdf
-    const overallPdf = await generatePDF();
-    zip.file('overall.pdf', overallPdf.output('blob'));
-
-    // Generate group PDFs
     for (const groupKey of selectedGroups) {
       const groupFolder = zip.folder(groupKey);
 
-      for (const groupName of Object.keys(groupedData.current.groups)) {
-        const groupPdf = await generatePDF();
-        groupFolder.file(`${groupName}.pdf`, groupPdf.output('blob'));
+      // Generate overall PDF for the grouping column
+      const overallContainer = document.querySelector(`#group-${groupKey}-overall`);
+      if (overallContainer) {
+        const overallPdf = await generatePDF(`${groupKey} Overall Charts`, overallContainer.querySelectorAll('.chart-container'));
+        groupFolder.file(`${groupKey}-overall.pdf`, overallPdf.output('blob'));
+      }
+
+      // Generate PDFs for each group
+      if (groupedData[groupKey] && groupedData[groupKey].current && groupedData[groupKey].current.groups) {
+        for (const groupName of Object.keys(groupedData[groupKey].current.groups)) {
+          const groupContainer = document.querySelector(`#group-${groupKey}-${groupName}`);
+          if (groupContainer) {
+            const groupPdf = await generatePDF(`${groupKey} Charts for Group: ${groupName}`, groupContainer.querySelectorAll('.chart-container'));
+            groupFolder.file(`${groupKey}-${groupName}.pdf`, groupPdf.output('blob'));
+          }
+        }
       }
     }
 

@@ -93,25 +93,25 @@ const ChartRenderer = ({ groupedData, selectedGroups }) => {
       {selectedGroups.map(groupKey => (
         <div key={groupKey}>
           <h3>Grouping: {groupKey}</h3>
-          <div>
+          <div id={`group-${groupKey}-overall`}>
             {allQuestions.map(questionKey => (
               <div key={questionKey} className="chart-container">
                 <h4>{questionKey}</h4>
                 <Bar data={generateChartData(groupedData[groupKey], questionKey)} options={chartOptions} />
               </div>
             ))}
-            {Object.keys(groupedData[groupKey].current.groups || {}).map(group => (
-              <div key={group}>
-                <h4>Group: {group}</h4>
-                {allQuestions.map(questionKey => (
-                  <div key={questionKey} className="chart-container">
-                    <h5>Question: {questionKey}</h5>
-                    <Bar data={generateChartData(groupedData[groupKey], questionKey, group)} options={chartOptions} />
-                  </div>
-                ))}
-              </div>
-            ))}
           </div>
+          {Object.keys(groupedData[groupKey].current.groups || {}).map(group => (
+            <div key={group} id={`group-${groupKey}-${group}`}>
+              <h4>Group: {group}</h4>
+              {allQuestions.map(questionKey => (
+                <div key={questionKey} className="chart-container">
+                  <h5>Question: {questionKey}</h5>
+                  <Bar data={generateChartData(groupedData[groupKey], questionKey, group)} options={chartOptions} />
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       ))}
     </div>
