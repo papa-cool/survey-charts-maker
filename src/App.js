@@ -4,7 +4,7 @@ import GroupSelector from './components/GroupSelector';
 import PreviousSurveyUploader from './components/PreviousSurveyUploader';
 import ChartRenderer from './components/ChartRenderer';
 import GenerateAndDownload from './components/GenerateAndDownload';
-import DataProcessor from './components/DataProcessor'; // Import DataProcessor
+import DataProcessor from './components/DataProcessor';
 import './App.css';
 
 function App() {
@@ -37,11 +37,6 @@ function App() {
   const handleProcessedData = (data) => {
     setProcessedData(data);
     setIsProcessing(false);
-  };
-
-  const generateCharts = () => {
-    setIsProcessing(true);
-    setProcessedData(null); // Clear previous processed data
   };
 
   const proceedToStep4 = () => {
@@ -77,11 +72,11 @@ function App() {
 
       {step === 3 && (
         <div className="step3">
-          <h2>Upload Previous Survey</h2>
+          <h2>Upload Previous Surveys</h2>
           {uploadedFiles.length > 0 && <p className="notification">Uploaded files: {uploadedFiles.join(', ')}</p>}
-          <p>Upload the previous survey to analyze evolution.</p>
-          <PreviousSurveyUploader onFilesParsed={handleFilesParsed} />
-          <button onClick={proceedToStep4}>Skip</button>
+          <p>Upload the previous surveys to analyze evolution.</p>
+          <PreviousSurveyUploader onFilesParsed={handleFilesParsed} uploadedFilesNumber={uploadedFiles.length} />
+          <button onClick={proceedToStep4}>Next</button>
         </div>
       )}
 
@@ -93,10 +88,10 @@ function App() {
           )}
           {processedData && (
             <div className="chart-columns">
-              {selectedGroups.map(groupKey => (
-                <div key={groupKey} className="chart-column">
-                  <h3>{groupKey}</h3>
-                  <ChartRenderer groupedData={processedData} selectedGroups={[groupKey]} />
+              {selectedGroups.map(categorizationType => (
+                <div key={categorizationType} className="chart-column">
+                  <h3>{categorizationType}</h3>
+                  <ChartRenderer groupedData={processedData[categorizationType]} categorizationType={categorizationType} />
                 </div>
               ))}
             </div>

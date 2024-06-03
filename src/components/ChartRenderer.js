@@ -4,7 +4,7 @@ import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
-const AbstractChartRenderer = ({ labels, datasets }) => {
+const AbstractChartRenderer = ({ labels, data }) => {
   const chartOptions = {
     plugins: {
       tooltip: {
@@ -43,94 +43,93 @@ const AbstractChartRenderer = ({ labels, datasets }) => {
     indexAxis: 'y',
   };
 
+  let datasets = [
+    { label: '1', data: data.map(p => p[0]), backgroundColor: 'rgba(255, 0, 0, 0.5)' },
+    { label: '2', data: data.map(p => p[1]), backgroundColor: 'rgba(255, 165, 0, 0.5)' },
+    { label: '3', data: data.map(p => p[2]), backgroundColor: 'rgba(255, 255, 0, 0.5)' },
+    { label: '4', data: data.map(p => p[3]), backgroundColor: 'rgba(0, 192, 0, 0.5)' },
+  ]
+
   return (
     <Bar data={{ labels, datasets }} options={chartOptions} />
   );
 };
 
-const generateChartData = (data, questionKey, includeGroups = false) => {
-  if (!data || !data.current || !data.previous) {
-    return { labels: [], datasets: [] };
+const transformCountsToPercents = (survey, questionKey) => {
+  return survey.questions[questionKey].map(count => survey.totalResponses > 0 ? count / survey.totalResponses : 0)
+}
+
+const OverallChart = ({ data, questionKey }) => {
+  let labels = ['Current'];
+  let allProportions = Array(data.length)
+  allProportions[0] = transformCountsToPercents(data.current, questionKey)
+
+  let previousIndex = 0
+  while(data[`previous${previousIndex}`]) {
+    labels = [...labels, previousIndex === 0 ? 'Previous' : `Survey -${previousIndex + 1}`]
+    allProportions[previousIndex + 1] = transformCountsToPercents(data[`previous${previousIndex}`], questionKey)
+    previousIndex++
   }
 
-  const previousLabels = data.previous.map((_, index) => index === 0 ? 'Previous' : `Survey -${index + 1}`);
-  let labels = ['Current', ...previousLabels];
-  let allProportions = [
-    (data.current.totalAnswers[questionKey] || []).map(count => data.current.totalResponses > 0 ? count / data.current.totalResponses : 0),
-    ...data.previous.map(survey => (survey.totalAnswers[questionKey] || []).map(count => survey.totalResponses > 0 ? count / survey.totalResponses : 0))
-  ];
-
-  if (includeGroups) {
-    const groupLabels = Object.keys(data.current.groups || {});
-    labels = [...labels, ...groupLabels];
-    const groupProportions = groupLabels.map(groupName => {
-      const group = data.current.groups[groupName] || { [questionKey]: [0, 0, 0, 0], totalResponses: 0 };
-      return (group[questionKey] || []).map(count => group.totalResponses > 0 ? count / group.totalResponses : 0);
-    });
-    allProportions = [...allProportions, ...groupProportions];
-  }
-
-  return {
-    labels: labels,
-    datasets: [
-      { label: 'Answer 1', data: allProportions.map(p => p[0]), backgroundColor: 'rgba(255, 99, 132, 0.5)' },
-      { label: 'Answer 2', data: allProportions.map(p => p[1]), backgroundColor: 'rgba(54, 162, 235, 0.5)' },
-      { label: 'Answer 3', data: allProportions.map(p => p[2]), backgroundColor: 'rgba(255, 206, 86, 0.5)' },
-      { label: 'Answer 4', data: allProportions.map(p => p[3]), backgroundColor: 'rgba(75, 192, 192, 0.5)' },
-    ]
-  };
-};
-
-const OverallChart = ({ groupedData, selectedGroups }) => {
-  if (!groupedData || !selectedGroups.length) return null;
-
-  const allQuestions = Object.keys(groupedData[selectedGroups[0]].current.totalAnswers || {}).filter(key => !selectedGroups.includes(key));
+  const groupLabels = Object.keys(data.current.groups || {});
+  labels = [...labels, ...groupLabels];
+  const groupProportions = groupLabels.map(groupName => transformCountsToPercents(data.current.groups[groupName], questionKey));
+  allProportions = [...allProportions, ...groupProportions];
   
   return (
-    <div id={`group-${selectedGroups[0]}-overall`}>
-      {allQuestions.map(questionKey => (
-        <div key={questionKey} className="chart-container">
-          <h4>{questionKey}</h4>
-          <AbstractChartRenderer {...generateChartData(groupedData[selectedGroups[0]], questionKey, true)} />
-        </div>
-      ))}
+    <div key={questionKey} className="chart-container">
+      <h4>{questionKey}</h4>
+      <AbstractChartRenderer labels={labels} data={allProportions} />
     </div>
   );
 };
 
-const GroupChart = ({ groupedData, selectedGroups }) => {
-  if (!groupedData || !selectedGroups.length) return null;
 
-  const allQuestions = Object.keys(groupedData[selectedGroups[0]].current.totalAnswers || {}).filter(key => !selectedGroups.includes(key));
+const GroupChart = ({ data, groupName, questionKey }) => {
+  let labels = ['Overall', groupName];
+  let allProportions = [
+    transformCountsToPercents(data.current, questionKey),
+    transformCountsToPercents(data.current.groups[groupName], questionKey)
+  ]
+
+  let previousIndex = 0
+  while(data[`previous${previousIndex}`]) {
+    labels = [...labels, previousIndex === 0 ? 'Previous' : `Survey -${previousIndex + 1}`]
+    allProportions = [...allProportions, transformCountsToPercents(data[`previous${previousIndex}`].groups[groupName], questionKey)]
+    previousIndex++
+  }
 
   return (
-    <div>
-      {Object.keys(groupedData[selectedGroups[0]].current.groups || {}).map(group => (
-        <div key={group} id={`group-${selectedGroups[0]}-${group}`}>
-          <h4>Group: {group}</h4>
-          {allQuestions.map(questionKey => (
-            <div key={questionKey} className="chart-container">
-              <h5>Question: {questionKey}</h5>
-              <AbstractChartRenderer {...generateChartData(groupedData[selectedGroups[0]], questionKey, false)} />
-            </div>
-          ))}
-        </div>
-      ))}
+    <div key={questionKey} className="chart-container">
+      <h4>{questionKey}</h4>
+      <AbstractChartRenderer labels={labels} data={allProportions} />
     </div>
-  );
+  )
 };
 
-const ChartRenderer = ({ groupedData, selectedGroups }) => {
-  if (!groupedData || !selectedGroups || !selectedGroups.length || !groupedData[selectedGroups[0]]) {
+const ChartRenderer = ({ groupedData, categorizationType }) => {
+  if (!groupedData) {
     return null; // Handle case where data is not yet loaded or properly initialized
   }
 
+  const allQuestions = Object.keys(groupedData.current.questions)
+
   return (
     <div>
-      <h3>Overall Charts</h3>
-      <OverallChart groupedData={groupedData} selectedGroups={selectedGroups} />
-      <h3>Group Charts</h3>
-      <GroupChart groupedData={groupedData} selectedGroups={selectedGroups} />
+      <div key={`group-${categorizationType}-overall`} id={`group-${categorizationType}-overall`}>
+        <h3>Overall Charts</h3>
+        {allQuestions.map(questionKey => (
+          <OverallChart data={groupedData} questionKey={questionKey} />
+        ))}
+      </div>
+      {Object.keys(groupedData.current.groups || {}).map(group => (
+        <div key={`group-${categorizationType}-${group}`} id={`group-${categorizationType}-${group}`}>
+          <h3>{group}</h3>
+          {allQuestions.map(questionKey => (
+            <GroupChart data={groupedData} groupName={group} questionKey={questionKey} />
+          ))}
+        </div>
+      ))}
     </div>
   );
 };
