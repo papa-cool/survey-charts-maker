@@ -69,7 +69,7 @@ const GenerateAndDownload = ({ groupedData, selectedGroups }) => {
 
   return (
     <div>
-      <button onClick={downloadAllCharts}>Download Charts</button>
+      <button className="text-lg px-5 py-2 mt-5" onClick={downloadAllCharts}>Download Charts</button>
     </div>
   );
 };

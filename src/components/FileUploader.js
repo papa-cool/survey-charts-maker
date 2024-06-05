@@ -22,7 +22,7 @@ const FileUploader = ({ onFilesParsed }) => {
       {({ getRootProps, getInputProps }) => (
         <div {...getRootProps({ className: 'dropzone' })}>
           <input {...getInputProps()} />
-          <p>Drop your current survey file here, or click to select file.</p>
+          <p className="m-0">Drop your current survey file here, or click to select file.</p>
         </div>
       )}
     </Dropzone>

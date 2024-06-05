@@ -5,7 +5,6 @@ import PreviousSurveyUploader from './components/PreviousSurveyUploader';
 import ChartRenderer from './components/ChartRenderer';
 import GenerateAndDownload from './components/GenerateAndDownload';
 import DataProcessor from './components/DataProcessor';
-import './App.css';
 
 function App() {
   const [step, setStep] = useState(1);
@@ -45,36 +44,36 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div className="App font-sans text-center">
       {step === 1 && (
         <div className="step1">
-          <h2>Welcome to the Data Visualization App</h2>
-          <p>This app helps you analyze survey results by generating detailed charts based on selected grouping columns.</p>
-          <div className="drop-zone">
+          <h2 className="my-5">Welcome to the Data Visualization App</h2>
+          <p className="my-2">This app helps you analyze survey results by generating detailed charts based on selected grouping columns.</p>
+          <div class="drop-zone border-2 border-dashed border-gray-400 rounded w-1/2 h-48 flex items-center justify-center m-auto">
             <FileUploader onFilesParsed={handleFilesParsed} />
           </div>
-          <p className="file-acceptance">Drop here your survey results to start. CSV, XLS, and XLSX files are accepted.</p>
+          <p className="mt-2 text-xs text-gray-600">Drop here your survey results to start. CSV, XLS, and XLSX files are accepted.</p>
         </div>
       )}
 
       {step === 2 && (
         <div className="step2">
-          <h2>Select Grouping Columns</h2>
-          <p>Select the columns that are used for categorization (grouping).</p>
+          <h2 className="my-5">Select Grouping Columns</h2>
+          <p className="my-2">Select the columns that are used for categorization (grouping).</p>
           <GroupSelector
             headers={headers}
             selectedGroups={selectedGroups}
             onSelectGroup={handleGroupSelection}
           />
-          <button onClick={() => setStep(3)}>Validate Selection</button>
+          <button className="text-lg px-5 py-2 mt-5" onClick={() => setStep(3)}>Validate Selection</button>
         </div>
       )}
 
       {step === 3 && (
         <div className="step3">
-          <h2>Upload Previous Surveys</h2>
-          {uploadedFiles.length > 0 && <p className="notification">Uploaded files: {uploadedFiles.join(', ')}</p>}
-          <p>Upload the previous surveys to analyze evolution.</p>
+          <h2 className="my-5">Upload Previous Surveys</h2>
+          {uploadedFiles.length > 0 && <p className="my-2 text-green-500 mt-2">Uploaded files: {uploadedFiles.join(', ')}</p>}
+          <p className="my-2">Upload the previous surveys to analyze evolution.</p>
           <PreviousSurveyUploader onFilesParsed={handleFilesParsed} uploadedFilesNumber={uploadedFiles.length} />
           <button onClick={proceedToStep4}>Next</button>
         </div>
@@ -87,9 +86,9 @@ function App() {
             <DataProcessor rawData={rawData} selectedGroups={selectedGroups} onProcessedData={handleProcessedData} />
           )}
           {processedData && (
-            <div className="chart-columns">
+            <div className="flex justify-around flex-wrap mt-5">
               {selectedGroups.map(categorizationType => (
-                <div key={categorizationType} className="chart-column">
+                <div key={categorizationType} className="flex-1 m-2">
                   <h3>{categorizationType}</h3>
                   <ChartRenderer groupedData={processedData[categorizationType]} categorizationType={categorizationType} />
                 </div>

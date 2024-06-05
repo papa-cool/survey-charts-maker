@@ -10,11 +10,11 @@ const GroupSelector = ({ headers, selectedGroups, onSelectGroup }) => {
   };
 
   return (
-    <div className="group-selector">
+    <div className="flex flex-wrap justify-center mt-5">
       {headers.map((header, index) => (
         <button
           key={index}
-          className={`group-selector-button ${selectedGroups.includes(header) ? 'selected' : ''}`}
+          className={`m-1 px-4 py-2 border-none rounded cursor-pointer ${selectedGroups.includes(header) ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
           onClick={() => handleGroupSelection(header)}
         >
           {header}
