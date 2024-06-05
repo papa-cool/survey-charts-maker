@@ -6,6 +6,8 @@ It will be soon available with firebase at https://survey-charts-maker.web.app
 
 You can check the [example](example/) to get an idea of possible usage.
 
+![Generated charts](https://github.com/papa-cool/survey-charts-maker/blob/master/example/Step%204.png)
+
 ## React usage
 
 [REACT_GETTING_STARTED](REACT_GETTING_STARTED.md)
