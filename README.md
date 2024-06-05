@@ -1,6 +1,6 @@
 # Survey Chart maker
 
-The goal of this app is to build several charts for easily analyze a survey result. It allows to compare the answers from several group of people and to compare the current result with the previous surveys.
+The goal of this app is to create various charts for easy analysis of survey results. It enables comparison of responses across different groups of people and allows for comparison of current results with previous surveys.
 
 It will be soon available with firebase at https://survey-charts-maker.web.app
 
